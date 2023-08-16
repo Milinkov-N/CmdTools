@@ -1,5 +1,10 @@
 #include <iostream>
 #include <string>
+#include <io.h>
+
+constexpr auto USAGE_MSG =
+	"Usage:\tcmdtools add <name> --path <file>\n"
+	"\tcmdtools remove <name>";
 
 class Args {
 public:
@@ -50,7 +55,7 @@ int main(int argc, char* argv[])
 	if (argc == 1)
 	{
 		std::cout << "CmdTools (tm) Developed by Milinkov Nikita (c) 2023\n" << std::endl;
-		std::cout << "Usage:\tcmdtools add <name> --path <file>" << std::endl;
+		std::cout << USAGE_MSG << std::endl;
 		return 0;
 	}
 
@@ -58,22 +63,22 @@ int main(int argc, char* argv[])
 
 	if (!strcmp("add", args[1]))
 	{
+		if (args.Size() < 5)
+		{
+			std::cout << "cmdtools: not enough arguments." << std::endl;
+			std::cout << USAGE_MSG << std::endl;
+			return -1;
+		}
+
 		FILE* fp = { 0 };
 		char filename[64] = { 0 };
 		char* userprofile = { 0 };
 		size_t sz = 0;
 
-		if (args.Size() < 5)
-		{
-			std::cout << "cmdtools: not enough arguments." << std::endl;
-			std::cout << "Usage:\tcmdtools add <name> --path <file>" << std::endl;
-			return -1;
-		}
-
 		if (!strcmp("--path", args[2]))
 		{
 			std::cout << "cmdtools: expected alias name, found '--path' flag" << std::endl;
-			std::cout << "Usage:\tcmdtools add <name> --path <file>" << std::endl;
+			std::cout << USAGE_MSG << std::endl;
 			return -1;
 		}
 
@@ -92,10 +97,45 @@ int main(int argc, char* argv[])
 			free(userprofile);
 		}
 	}
+	else if (!strcmp("remove", args[1]))
+	{
+		if (args.Size() < 3)
+		{
+			std::cout << "cmdtools: not enough arguments." << std::endl;
+			std::cout << USAGE_MSG << std::endl;
+		}
+
+		char filename[64] = { 0 };
+		char* userprofile = { 0 };
+		size_t sz = 0;
+
+		if (_dupenv_s(&userprofile, &sz, "USERPROFILE") == 0 && userprofile != nullptr)
+		{
+			sprintf_s(filename, "%s\\Scripts\\%s.bat", userprofile, args[2]);
+
+#ifdef _DEBUG
+			std::cout << "[DEBUG] Final filename: " << filename << std::endl;
+#endif
+
+			if (_access(filename, 0) == 0)
+			{
+#ifdef _DEBUG
+				std::cout << "[DEBUG] File '" << filename << "' exists" << std::endl;
+#endif
+
+				if (remove(filename) == 0)
+					std::cout << "cmdtools: alias successfully removed." << std::endl;
+				else
+					std::cout << "cmdtools: couldn't remove the '" << args[2] << "' alias." << std::endl;
+			}
+
+			free(userprofile);
+		}
+	}
 	else
 	{
 		std::cout << "cmdtools: '" << args[1] << "' is not a cmdtools command." << std::endl;
-		std::cout << "Usage:\tcmdtools add <name> --path <file>" << std::endl;
+		std::cout << USAGE_MSG << std::endl;
 	}
 
 
